@@ -1,0 +1,30 @@
+.navMain {
+    width: 100%;
+    top: 0;
+    display: flex;
+    position: fixed;
+    align-items: center;
+    justify-content: center;
+}
+
+.navDiv {
+    width: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2% 5%;
+}
+
+.navDiv .logoImage {
+    display: flex;
+    text-align: center;
+    align-items: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #069ce2;
+}
+
+.navDiv .logoImage img {
+    width: 70px;
+    margin-right: 5px;
+}

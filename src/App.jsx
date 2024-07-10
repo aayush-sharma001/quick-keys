@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './App.css'
 import Typing from './Components/Typing/typing'
 
 function App() {
