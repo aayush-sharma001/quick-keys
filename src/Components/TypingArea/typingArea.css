@@ -1,0 +1,104 @@
+.typingDiv {
+    display: flex;
+    padding-top: 10%;
+    align-items: center;
+    width: 100%;
+    flex-direction: column;
+}
+
+.typingDiv .typingSettingsBar {
+    display: flex;
+    border: 2px solid #069ce2;
+    width: 70%;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 0% 0% 4% 0%;
+}
+
+.typingDiv .typingSettingsBar .timer,
+.typingDiv .typingSettingsBar .levels {
+    display: flex;
+    width: 50%;
+    font-weight: 700;
+    color: #0f8585;
+    font-size: 1.2rem;
+}
+
+.timer span,
+.levels span {
+    margin-left: 5%;
+    font-weight: 400;
+}
+
+.timer span.selected,
+.levels span.selected {
+    font-weight: 600;
+    color: #069ce2;
+}
+
+
+.typingArea {
+    position: relative;
+    width: 90%;
+    height: 200px;
+    overflow-y: auto;
+    word-break: normal;
+    overflow-wrap: break-word; 
+}
+
+.typingArea::-webkit-scrollbar {
+    display: none;
+}
+
+.typingArea {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#original-text {
+    color: #ccc;
+    font-size: 2rem;
+    line-height: 3rem;
+    margin: 0;
+    font-weight: 600;
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+#typed-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: rgb(110, 104, 104);
+    font-size: 2rem;
+    line-height: 3rem;
+    margin: 0;
+    pointer-events: none; 
+    font-weight: 600;
+    word-break: normal;
+    overflow-wrap: break-word; 
+}
+
+.correct {
+    font-weight: 600;
+}
+
+.incorrect {
+    color: rgb(211, 6, 6);
+}
+
+.cursor {
+    display: inline;
+    width: 1px;
+    color: #069ce2;
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    from, to {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+}

@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import './App.css'
-import Typing from './Components/Typing/typing'
+import Typing from './Components/TypingPage/typing'
 
 function App() {
 	const [count, setCount] = useState(0)
