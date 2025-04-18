@@ -1,16 +1,17 @@
 import React from 'react';
-import Logo from "../../assets/logo.png"
-import './nav.css'
-const NavBar = () => {
-    return (
-        <div className='navMain'>
-            <div className='navDiv'>
-                <div className='logoImage'>
-                    <img src={Logo} alt="LogoImage" /> Quick Keys
-                </div>
-            </div>
-        </div>
-    )
-}
+import Logo from "../../assets/logo.png";
+import './nav.css';
 
-export default NavBar
+const NavBar = ({ onReset }) => {
+  return (
+    <div className='navMain'>
+      <div className='navDiv'>
+        <div className='logoImage' onClick={onReset}>
+          <img src={Logo} alt="LogoImage" /> Quick Keys
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NavBar;
