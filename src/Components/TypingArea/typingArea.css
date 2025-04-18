@@ -22,7 +22,6 @@
     font-weight: 700;
     color: #0f8585;
     font-size: 1.2rem;
-    
 }
 
 .timer span,
@@ -38,14 +37,13 @@
     color: #069ce2;
 }
 
-
 .typingArea {
     position: relative;
     width: 90%;
     height: 200px;
     overflow-y: auto;
     word-break: normal;
-    overflow-wrap: break-word; 
+    overflow-wrap: break-word;
 }
 
 .typingArea::-webkit-scrollbar {
@@ -75,10 +73,10 @@
     font-size: 2rem;
     line-height: 3rem;
     margin: 0;
-    pointer-events: none; 
+    pointer-events: none;
     font-weight: 600;
     word-break: normal;
-    overflow-wrap: break-word; 
+    overflow-wrap: break-word;
 }
 
 .correct {
@@ -105,3 +103,43 @@
     }
 }
 
+.countdown {
+    font-size: 1.2rem;
+    margin: 15px 0;
+    color: #333;
+}
+
+.results {
+    /* background: #f5f5f5; */
+    padding: 5px;
+    border: 10px solid white;
+    border-radius: 8px;
+    margin-top: 20px;
+    width: 70%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.results .mainData {
+    padding: 20px;
+}
+
+.results .resetButton {
+    display: flex;
+    align-items: center;
+}
+
+.results .resetButton button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    padding: 10px;
+    border: none;
+    background-color: #069ce2;
+    border-radius: 10px;
+    font-size: .9rem;
+    margin-bottom: 15px;
+}

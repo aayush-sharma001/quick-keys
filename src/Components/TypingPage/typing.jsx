@@ -1,15 +1,17 @@
-import React from 'react';
-import './typing.css'
+import React, { useState } from 'react';
+import './typing.css';
 import NavBar from '../NavBar/navbar';
 import TypingArea from './../TypingArea/typingArea';
 
 const Typing = () => {
+    const [resetCount, setResetCount] = useState(0);
+
     return (
         <>
-            <NavBar/>
-            <TypingArea/>
+            <NavBar onReset={() => setResetCount(c => c + 1)} />
+            <TypingArea resetCount={resetCount} />
         </>
-    )
-}
+    );
+};
 
-export default Typing
+export default Typing;

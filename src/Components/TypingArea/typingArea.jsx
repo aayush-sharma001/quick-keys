@@ -3,316 +3,246 @@ import { easyWordMap, hardWordMap } from '../../Helper/words';
 import './typingArea.css';
 
 const wordCounts = {
-    15: 70,
-    30: 150,
-    60: 300
+	15: 70,
+	30: 150,
+	60: 300
 };
 
-const TypingArea = () => {
-    const [words, setWords] = useState(wordCounts[30]);
-    const [level, setLevel] = useState('easy');
-    const [time, setTime] = useState(30);
-    const [paragraph, setParagraph] = useState('');
-    const [userInput, setUserInput] = useState('');
-    const [startTime, setStartTime] = useState(null);
-    const [endTime, setEndTime] = useState(null);
-    const [countdown, setCountdown] = useState(time);
-    const [speed, setSpeed] = useState(0);
-    const [accuracy, setAccuracy] = useState(0);
-    const typingAreaRef = useRef(null);
-    const [wrongCharCount, setWrongCharCount] = useState(0)
+const TypingArea = ({ resetCount }) => {
+	const [words, setWords] = useState(wordCounts[30]);
+	const [level, setLevel] = useState('easy');
+	const [time, setTime] = useState(30);
+	const [paragraph, setParagraph] = useState('');
 
-    useEffect(() => {
-        setWords(wordCounts[time]);
-        setParagraph(randomParagraph(level, words));
-        resetTest();
-    }, [time, level]);
+	const [userInput, setUserInput] = useState('');
+	const [startTime, setStartTime] = useState(null);
+	const [endTime, setEndTime] = useState(null);
+	const [countdown, setCountdown] = useState(time);
+	const [speed, setSpeed] = useState(0);
+	const [accuracy, setAccuracy] = useState(0);
+	const typingAreaRef = useRef(null);
+	const [wrongCharCount, setWrongCharCount] = useState(0);
+	const [testCompleted, setTestCompleted] = useState(false);
 
-    useEffect(() => {
-        if (startTime && endTime) {
-            const id = setInterval(() => {
-                const remainingTime = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-                console.log("Remaining time:", remainingTime);
-                setCountdown(remainingTime);
+	useEffect(() => {
+		resetTest();
+	}, [resetCount]);
 
-                if (remainingTime <= 0) {
-                    console.log("Time's up! Calculating results...");
-                    clearInterval(id);
-                    calculateResults();
-                }
-            }, 1000);
-            return () => clearInterval(id);
-        }
-    }, [startTime, endTime]);
+	useEffect(() => {
+		setWords(wordCounts[time]);
+		setParagraph(randomParagraph(level, wordCounts[time]));
+		resetTest();
+	}, [time, level, resetCount]);
 
-    // Reset timer if user deletes all input
-    useEffect(() => {
-        if (userInput.length === 0 && startTime) {
-            console.log("User input is empty. Resetting timer.");
-            resetTest();
-        }
-    }, [userInput, startTime]);
+	useEffect(() => {
+		let timerId;
 
-    useEffect(() => {
-        if (startTime) {
-            // Compare characters for accuracy
-            let correctChars = 0;
-            let totalCharsEntered = userInput.length;
-            let wrongChars = 0;
-    
-            for (let i = 0; i < totalCharsEntered; i++) {
-                if (i < paragraph.length && userInput[i] === paragraph[i]) {
-                    correctChars++;
-                } else {
-                    wrongChars++;
-                }
-            }
+		if (startTime && countdown > 0) {
+			timerId = setTimeout(() => {
+				const newCountdown = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+				setCountdown(newCountdown);
 
-            setWrongCharCount(wrongChars);
-    
-            // Calculate accuracy
-            const accuracy = totalCharsEntered > 0 ? (((correctChars-wrongCharCount) / totalCharsEntered) * 100) : 0;
-            console.log("Correct characters:", correctChars);
-            console.log("Total characters entered:", totalCharsEntered);
-            console.log("Calculated accuracy:", accuracy);
-    
-            // Update state
-            setAccuracy(accuracy);
-        }
-    }, [userInput, startTime, paragraph]);
+				if (newCountdown <= 0) {
+					calculateFinalResults();
+				}
+			}, 1000);
+		}
 
-    // Real-time word count and accuracy calculation
-    useEffect(() => {
-        if (startTime) {
-            const totalWordsWritten = countWords(userInput);
-            console.log("Total words written:", totalWordsWritten);
+		return () => clearTimeout(timerId);
+	}, [countdown, startTime, endTime]);
 
-            const originalWords = paragraph.trim().split(/\s+/);
-            const userWords = userInput.trim().split(/\s+/);
+	useEffect(() => {
+		if (startTime && countdown > 0) {
+			calculateIntermediateResults();
+		}
+	}, [userInput]);
 
-            let correctWords = 0;
-            let incorrectWords = 0;
+	const getRandomWords = (wordArray, count) => {
+		const shuffledArray = [...wordArray].sort(() => 0.5 - Math.random());
+		return shuffledArray.slice(0, count);
+	};
 
-            for (let i = 0; i < originalWords.length; i++) {
-                if (i < userWords.length) {
-                    if (userWords[i] === originalWords[i]) {
-                        correctWords++;
-                    } else {
-                        incorrectWords++;
-                    }
-                } else {
-                    incorrectWords += originalWords.length - i;
-                    break;
-                }
-            }
+	const randomParagraph = (level, words) => {
+		let paragraph = '';
+		if (level === 'easy') {
+			paragraph = getRandomWords(easyWordMap, words).join(" ");
+		} else if (level === 'hard') {
+			paragraph = getRandomWords(hardWordMap, words).join(" ");
+		} else if (level === 'medium') {
+			const halfWords = Math.floor(words / 2);
+			const easyWords = getRandomWords(easyWordMap, halfWords);
+			const hardWords = getRandomWords(hardWordMap, words - halfWords);
+			const combinedWords = easyWords.concat(hardWords).sort(() => 0.5 - Math.random());
+			paragraph = combinedWords.join(" ");
+		}
+		return paragraph;
+	};
 
-            incorrectWords += Math.min(0, userWords.length - originalWords.length);
+	const handleKeyDown = (event) => {
+		if (testCompleted || countdown <= 0) return;
 
-            const accuracy = ((correctWords / (correctWords + incorrectWords)) * 100) || 0;
-            console.log("Correct words:", correctWords);
-            console.log("Incorrect words:", incorrectWords);
-            console.log("Calculated accuracy:", accuracy);
+		if (event.key === 'Tab') {
+			event.preventDefault();
+			return;
+		}
 
-            setSpeed(totalWordsWritten); // Update speed in real-time
-            // setAccuracy(accuracy); // Update accuracy in real-time
-        }
-    }, [userInput, startTime, paragraph]);
+		if (!startTime && event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+			setStartTime(Date.now());
+			setEndTime(Date.now() + time * 1000);
+			setTestCompleted(false);
+		}
 
-    // Generate random words from a word array
-    const getRandomWords = (wordArray, count) => {
-        // console.log("Getting random words from array:", wordArray);
-        const shuffledArray = wordArray.sort(() => 0.5 - Math.random());
-        // console.log("Shuffled array:", shuffledArray);
-        return shuffledArray.slice(0, count);
-    };
+		if (event.key === 'Backspace') {
+			setUserInput((prev) => prev.slice(0, -1));
+		} else if (event.key === ' ' && userInput.slice(-1) !== ' ') {
+			setUserInput((prev) => prev + ' ');
+		} else if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+			setUserInput((prev) => prev + event.key);
+		}
+	};
 
-    // Generate a random paragraph based on level and word count
-    const randomParagraph = (level, words) => {
-        // console.log("Generating random paragraph for level:", level, "with word count:", words);
-        let paragraph = '';
-        if (level === 'easy') {
-            paragraph = getRandomWords(easyWordMap, words).join(" ");
-        } else if (level === 'hard') {
-            paragraph = getRandomWords(hardWordMap, words).join(" ");
-        } else if (level === 'medium') {
-            const halfWords = Math.floor(words / 2);
-            const easyWords = getRandomWords(easyWordMap, halfWords);
-            const hardWords = getRandomWords(hardWordMap, words - halfWords);
-            const combinedWords = easyWords.concat(hardWords).sort(() => 0.5 - Math.random());
-            paragraph = combinedWords.join(" ");
-        }
-        // console.log("Generated paragraph:", paragraph);
-        return paragraph;
-    };
+	const countWords = (text) => {
+		const wordsArray = text.trim().split(/\s+/);
+		return wordsArray.filter(word => word.length > 0).length;
+	};
 
-    // Handle keydown events
-    const handleKeyDown = (event) => {
-        if (countdown <= 0) return; 
-        console.log("Key pressed:", event.key);
-        if (!startTime && event.key.length === 1) {
-            console.log("Timer started");
-            setStartTime(Date.now());
-            setEndTime(Date.now() + time * 1000);
-        }
+	const getDisplayText = () => {
+		let displayText = '';
+		const inputLength = userInput.length;
+		const paragraphLength = paragraph.length;
 
-        if (event.key === 'Backspace') {
-            console.log("Backspace pressed. Updating user input.");
-            setUserInput((prev) => prev.slice(0, -1));
-        } else if (event.key === ' ' && userInput.slice(-1) !== ' ') {
-            console.log("Space pressed. Adding space to user input.");
-            setUserInput((prev) => prev + ' ');
-        } else if (event.key.length === 1) {
-            console.log("Character pressed. Adding to user input.");
-            setUserInput((prev) => prev + event.key);
-        }
-        console.log("Current user input:", userInput);
-    };
+		for (let i = 0; i < paragraphLength; i++) {
+			if (i < inputLength) {
+				if (userInput[i] === paragraph[i]) {
+					displayText += `<span class="correct">${paragraph[i]}</span>`;
+				} else {
+					displayText += `<span class="incorrect">${paragraph[i]}</span>`;
+				}
+			} else if (i === inputLength) {
+				displayText += '<span class="cursor">|</span>';
+				displayText += paragraph[i];
+			} else {
+				displayText += paragraph[i];
+			}
+		}
 
-    // Count the number of words in the input text
-    const countWords = (text) => {
-        console.log("Input text:", text);
-        const wordsArray = text.trim().split(/\s+/);
-        console.log("Words array:", wordsArray);
-        const filteredWords = wordsArray.filter(Boolean);
-        console.log("Filtered words:", filteredWords);
-        const wordCount = filteredWords.length;
-        console.log("Word count:", wordCount);
-        return wordCount;
-    };
+		if (inputLength >= paragraphLength) {
+			displayText += '<span class="cursor">|</span>';
+		}
 
-    // Generate display text with correct/incorrect indicators
-    const getDisplayText = () => {
-        let displayText = '';
+		return displayText;
+	};
 
-        for (let i = 0; i < paragraph.length; i++) {
-            if (i < userInput.length) {
-                if (userInput[i] === paragraph[i]) {
-                    displayText += `<span class="correct">${paragraph[i]}</span>`;
-                } else {
-                    displayText += `<span class="incorrect">${paragraph[i]}</span>`;
-                }
-            } else if (i === userInput.length) {
-                displayText += '<span class="cursor">|</span>';
-                displayText += paragraph[i];
-            } else {
-                displayText += paragraph[i];
-            }
-        }
+	const calculateIntermediateResults = () => {
+		let correctChars = 0;
+		const inputLength = userInput.length;
 
-        if (userInput.length === paragraph.length) {
-            displayText += '<span class="cursor">|</span>';
-        }
+		for (let i = 0; i < inputLength; i++) {
+			if (i < paragraph.length && userInput[i] === paragraph[i]) {
+				correctChars++;
+			}
+		}
 
-        return displayText;
-    };
+		const totalChars = Math.max(inputLength, 1);
+		const newAccuracy = (correctChars / totalChars) * 100;
+		setAccuracy(newAccuracy);
 
-    // Calculate final results when the timer ends
-    const calculateResults = () => {
-        console.log("Calculating results...");
-        if (!startTime) {
-            console.log("Start time not set. Exiting.");
-            return;
-        }
+		const elapsedMinutes = (time - countdown) / 60;
+		const currentSpeed = countWords(userInput) / Math.max(elapsedMinutes, 0.1);
+		setSpeed(currentSpeed);
+	};
 
-        const totalWordsWritten = countWords(userInput);
-        console.log("Total words written:", totalWordsWritten);
+	const calculateFinalResults = () => {
+		if (!startTime || testCompleted) return;
 
-        const timeInMinutes = time / 60;
-        const wpm = Math.round(totalWordsWritten / timeInMinutes);
+		const totalWordsWritten = countWords(userInput);
+		const timeInMinutes = time / 60;
+		const wpm = Math.round(totalWordsWritten / timeInMinutes);
 
-        const originalWords = paragraph.trim().split(/\s+/);
-        const userWords = userInput.trim().split(/\s+/);
+		let correctChars = 0;
+		const inputLength = userInput.length;
 
-        let correctWords = 0;
-        let incorrectWords = 0;
-        let correctChars = 0;
-        let totalCharsEntered = userInput.length;
+		for (let i = 0; i < inputLength; i++) {
+			if (i < paragraph.length && userInput[i] === paragraph[i]) {
+				correctChars++;
+			}
+		}
 
-        for (let i = 0; i < originalWords.length; i++) {
-            if (i < userWords.length) {
-                if (userWords[i] === originalWords[i]) {
-                    correctWords++;
-                } else {
-                    incorrectWords++;
-                }
-            } else {
-                incorrectWords += originalWords.length - i;
-                break;
-            }
-        }
+		const finalAccuracy = inputLength > 0 ? (correctChars / inputLength) * 100 : 0;
 
-        incorrectWords += Math.min(0, userWords.length - originalWords.length);
+		setSpeed(wpm);
+		setAccuracy(finalAccuracy);
+		setTestCompleted(true);
+	};
 
-        const accuracy = totalCharsEntered > 0 ? ((correctChars / totalCharsEntered) * 100) : 0;
-        console.log("Correct words:", correctWords);
-        console.log("Incorrect words:", incorrectWords);
-        console.log("Calculated accuracy:", accuracy);
+	const resetTest = () => {
+		setStartTime(null);
+		setEndTime(null);
+		setCountdown(time);
+		setUserInput('');
+		setSpeed(0);
+		setAccuracy(0);
+		setTestCompleted(false);
+		setWrongCharCount(0);
 
-        setSpeed(wpm);
-        setAccuracy(accuracy);
-    };
+		// Focus the typing area on reset
+		if (typingAreaRef.current) {
+			typingAreaRef.current.focus();
+		}
+	};
 
-    // Reset the test
-    const resetTest = () => {
-        console.log("Resetting test...");
-        setStartTime(null);
-        setEndTime(null);
-        setCountdown(time);
-        setUserInput('');
-        setSpeed(0);
-        setAccuracy(0);
-    };
+	useEffect(() => {
+		const handleKeyDownWrapper = (event) => handleKeyDown(event);
+		window.addEventListener('keydown', handleKeyDownWrapper);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDownWrapper);
+		};
+	}, [userInput, countdown, testCompleted]);
 
-    // Add keydown event listener
-    useEffect(() => {
-        console.log("Effect: Adding keydown event listener");
-        const handleKeyDownWrapper = (event) => handleKeyDown(event);
-        document.addEventListener('keydown', handleKeyDownWrapper);
-        return () => {
-            console.log("Effect: Removing keydown event listener");
-            document.removeEventListener('keydown', handleKeyDownWrapper);
-        };
-    }, [userInput]);
+	return (
+		<div className='typingDiv' ref={typingAreaRef} tabIndex="0">
+			<div className='typingSettingsBar'>
+				<div className='levels'>
+					Select Level:
+					<span onClick={() => setLevel('easy')} className={level === 'easy' ? 'selected' : ''}>Easy</span>
+					<span onClick={() => setLevel('medium')} className={level === 'medium' ? 'selected' : ''}>Medium</span>
+					<span onClick={() => setLevel('hard')} className={level === 'hard' ? 'selected' : ''}>Hard</span>
+				</div>
+				<div className='timer'>
+					Select Timer:
+					<span onClick={() => setTime(15)} className={time === 15 ? 'selected' : ''}>15s</span>
+					<span onClick={() => setTime(30)} className={time === 30 ? 'selected' : ''}>30s</span>
+					<span onClick={() => setTime(60)} className={time === 60 ? 'selected' : ''}>60s</span>
+				</div>
+			</div>
+			<div className='typingArea'>
+				<p id="original-text">{paragraph}</p>
+				<p
+					id="typed-text"
+					dangerouslySetInnerHTML={{ __html: getDisplayText() }}
+				/>
+			</div>
+			<div className='countdown'>
+				{startTime ? (
+					<p>Time Left: {countdown} seconds</p>
+				) : (
+					<p>Start typing to begin the timer!</p>
+				)}
+			</div>
+			<div className='results'>
+				<div className='mainData'>
+					<p>Speed: {Math.round(speed)} WPM</p>
+					<p>Accuracy: {accuracy.toFixed(2)}%</p>
+				</div>
+				<div className='resetButton'>
+					{testCompleted && (
+						<button onClick={resetTest}>Restart Test</button>
+					)}
+				</div>
 
-    return (
-        <div className='typingDiv'>
-            <div className='typingSettingsBar'>
-                <div className='levels'>
-                    Select Level: 
-                    <span onClick={() => setLevel('easy')} className={level === 'easy' ? 'selected' : ''}>Easy</span>
-                    <span onClick={() => setLevel('medium')} className={level === 'medium' ? 'selected' : ''}>Medium</span>
-                    <span onClick={() => setLevel('hard')} className={level === 'hard' ? 'selected' : ''}>Hard</span>
-                </div>
-                <div className='timer'>
-                    Select Timer: 
-                    <span onClick={() => setTime(15)} className={time === 15 ? 'selected' : ''}>15s</span>
-                    <span onClick={() => setTime(30)} className={time === 30 ? 'selected' : ''}>30s</span>
-                    <span onClick={() => setTime(60)} className={time === 60 ? 'selected' : ''}>60s</span>
-                </div>
-            </div>
-            <div className='typingArea' ref={typingAreaRef}>
-                <p id="original-text">{paragraph}</p>
-                <p
-                    id="typed-text"
-                    dangerouslySetInnerHTML={{ __html: getDisplayText() }}
-                />
-            </div>
-            <div className='countdown'>
-                {startTime ? (
-                    <p>Time Left: {countdown} seconds</p>
-                ) : (
-                    <p>Start typing to begin the timer!</p>
-                )}
-            </div>
-            {endTime && (
-                <div className='results'>
-                    <h2>Final Results</h2>
-                    <p>Speed: {speed} WPM</p>
-                    <p>Accuracy: {accuracy.toFixed(2)}%</p>
-                </div>
-            )}
-        </div>
-    );
+			</div>
+		</div>
+	);
 };
 
 export default TypingArea;
