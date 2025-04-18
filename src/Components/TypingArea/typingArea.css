@@ -22,12 +22,14 @@
     font-weight: 700;
     color: #0f8585;
     font-size: 1.2rem;
+    
 }
 
 .timer span,
 .levels span {
     margin-left: 5%;
     font-weight: 400;
+    cursor: pointer;
 }
 
 .timer span.selected,
@@ -89,7 +91,7 @@
 
 .cursor {
     display: inline;
-    width: 1px;
+    font-weight: 100;
     color: #069ce2;
     animation: blink 1s step-end infinite;
 }
@@ -102,3 +104,4 @@
         opacity: 0;
     }
 }
+
